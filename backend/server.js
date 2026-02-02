@@ -10,7 +10,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const IS_PROD = process.env.NODE_ENV === "production";
 
-console.log("🚀 Démarrage du serveur MRSA MDT...");
+console.log("🚀 Démarrage du serveur F1 Championship Manager...");
 
 // Health check pour Railway
 app.get("/api/health", (req, res) => {
@@ -33,17 +33,15 @@ const startServer = async () => {
     const initDatabase = require("./config/initDb");
     const { extractUser } = require("./middleware/auth");
 
-    // Routes imports
+    // --- ROUTES IMPORTS ---
     const authRoutes = require("./routes/auth");
     const usersRoutes = require("./routes/users");
-    const appointmentsRoutes = require("./routes/appointments");
-    const patientsRoutes = require("./routes/patients");
-    const diagnosisRoutes = require("./routes/diagnosis");
-    const adminRoutes = require("./routes/admin");
-    const reportsRoutes = require("./routes/reports");
-    const medicalVisitsRoutes = require("./routes/medicalVisits"); // Import manquant ajouté
+    const adminRoutes = require("./routes/admin"); // Gestion des utilisateurs (Admin panel)
+    
+    // La route principale du projet F1
+    const championshipRoutes = require("./routes/championship");
 
-    // Init DB
+    // Init DB (Création des tables F1 si inexistantes)
     await initDatabase();
     console.log("✅ Base de données connectée et initialisée.");
 
@@ -54,14 +52,14 @@ const startServer = async () => {
         tableName: "session", 
         createTableIfMissing: true 
       }),
-      secret: process.env.SESSION_SECRET || "ems-secret-key-change-me",
+      secret: process.env.SESSION_SECRET || "f1-manager-secret-key-change-me",
       resave: false,
       saveUninitialized: false,
       proxy: true,
       cookie: { 
         secure: IS_PROD,
         httpOnly: true, 
-        maxAge: 7 * 24 * 60 * 60 * 1000,
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 1 semaine
         sameSite: 'lax'
       }
     }));
@@ -69,19 +67,18 @@ const startServer = async () => {
     app.use(passport.initialize());
     app.use(passport.session());
 
+    // Middleware global pour extraire l'utilisateur courant
     app.use("/api", extractUser);
 
-    // API Routes
+    // --- API ROUTES ---
     app.use("/api/auth", authRoutes);
     app.use("/api/users", usersRoutes);
-    app.use("/api/appointments", appointmentsRoutes);
-    app.use("/api/patients", patientsRoutes);
-    app.use("/api/diagnosis", diagnosisRoutes);
     app.use("/api/admin", adminRoutes);
-    app.use("/api/reports", reportsRoutes);
-    app.use("/api/medical-visits", medicalVisitsRoutes); // Utilisation de la route
+    
+    // Route principale pour les données F1 (Classements, Calendrier, Race Control)
+    app.use("/api/championship", championshipRoutes);
 
-    // Serving Frontend
+    // Serving Frontend (Pour la production sur Railway)
     const distPath = path.resolve(__dirname, "../frontend/dist");
     const indexPath = path.join(distPath, "index.html");
 
@@ -91,7 +88,7 @@ const startServer = async () => {
         if (fs.existsSync(indexPath)) {
           res.sendFile(indexPath);
         } else {
-          res.status(500).send("Erreur: index.html introuvable");
+          res.status(500).send("Erreur: index.html introuvable (Build frontend manquant)");
         }
       });
     }
