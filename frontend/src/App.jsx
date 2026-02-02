@@ -1,5 +1,5 @@
 /**
- * App.jsx - Composant racine de l'application
+ * App.jsx - Composant racine F1 Championship Manager
  * Gère le routing et les providers de contexte
  */
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
@@ -14,17 +14,13 @@ import { ProtectedRoute, AdminRoute, PublicOnlyRoute } from "./components/auth/P
 // Pages publiques
 import { Landing } from "./pages/public/Landing";
 import { Login } from "./pages/public/Login";
-import { PublicBooking } from "./pages/public/PublicBooking";
+import { Standings } from "./pages/public/Standings"; // Nouvelle page Classements
+import { Calendar } from "./pages/public/Calendar";   // Nouvelle page Calendrier
 
-// Pages privées
+// Pages privées (Dashboard & Admin)
 import { Dashboard } from "./pages/private/Dashboard";
-import { Patients } from "./pages/private/Patients";
-import { Appointments } from "./pages/private/Appointments";
-import { Diagnosis } from "./pages/private/Diagnosis";
-import { Reports } from "./pages/private/Reports";
-import { Roster } from "./pages/private/Roster";
-import { Admin } from "./pages/private/Admin";
-import { MedicalVisits } from "./pages/private/MedicalVisits"; // Import de la nouvelle page
+import { AdminRaceControl } from "./pages/private/AdminRaceControl"; // Gestion des courses
+import { AdminTeams } from "./pages/private/AdminTeams";             // Gestion des écuries
 
 /**
  * Composant App principal
@@ -35,9 +31,10 @@ export default function App() {
       <ThemeProvider>
         <AuthProvider>
           <Routes>
-            {/* Routes publiques */}
+            {/* --- ROUTES PUBLIQUES --- */}
+            
+            {/* Landing page (Accueil) */}
             <Route path="/" element={<Landing />} />
-            <Route path="/book" element={<PublicBooking />} />
             
             {/* Login - Redirige vers dashboard si déjà connecté */}
             <Route
@@ -49,7 +46,9 @@ export default function App() {
               }
             />
 
-            {/* Routes protégées (authentification requise) */}
+            {/* --- ROUTES MEMBRES (PROTECTED) --- */}
+            {/* Accessibles à tout utilisateur connecté */}
+
             <Route
               path="/dashboard"
               element={
@@ -60,71 +59,46 @@ export default function App() {
             />
 
             <Route
-              path="/patients"
+              path="/standings"
               element={
                 <ProtectedRoute>
-                  <Patients />
+                  <Standings />
                 </ProtectedRoute>
               }
             />
 
             <Route
-              path="/appointments"
+              path="/calendar"
               element={
                 <ProtectedRoute>
-                  <Appointments />
+                  <Calendar />
                 </ProtectedRoute>
               }
             />
 
-            <Route
-              path="/diagnosis"
-              element={
-                <ProtectedRoute>
-                  <Diagnosis />
-                </ProtectedRoute>
-              }
-            />
+            {/* --- ROUTES ADMIN (RACE CONTROL) --- */}
+            {/* Accessibles uniquement aux admins */}
 
             <Route
-              path="/reports"
-              element={
-                <ProtectedRoute>
-                  <Reports />
-                </ProtectedRoute>
-              }
-            />
-
-            {/* Nouvelle Route : Visite Médicale LSPD */}
-            <Route
-              path="/medical-visits"
-              element={
-                <ProtectedRoute>
-                  <MedicalVisits />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/roster"
-              element={
-                <ProtectedRoute>
-                  <Roster />
-                </ProtectedRoute>
-              }
-            />
-
-            {/* Admin - Utilise AdminRoute qui vérifie canAccessAdmin */}
-            <Route
-              path="/admin"
+              path="/admin/races"
               element={
                 <AdminRoute>
-                  <Admin />
+                  <AdminRaceControl />
                 </AdminRoute>
               }
             />
 
-            {/* Catch-all - Redirige vers l'accueil */}
+            <Route
+              path="/admin/teams"
+              element={
+                <AdminRoute>
+                  <AdminTeams />
+                </AdminRoute>
+              }
+            />
+
+            {/* --- CATCH-ALL --- */}
+            {/* Redirige vers l'accueil si route inconnue */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </AuthProvider>
