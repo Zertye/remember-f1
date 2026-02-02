@@ -1,6 +1,6 @@
 /**
  * Layout - Composant de mise en page principale avec sidebar
- * ADAPTÉ POUR F1 CHAMPIONSHIP MANAGER
+ * ADAPTÉ POUR F1 CHAMPIONSHIP MANAGER (VERSION PRO)
  */
 import { useState, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
@@ -9,12 +9,15 @@ import {
   Trophy,     // Classements
   Calendar,   // Calendrier
   Flag,       // Race Control
-  Users,      // Écuries & Pilotes
+  Users,      // Écuries (Liste publique)
+  Car,        // Mon Écurie (Privé)
+  Settings,   // Réglages Admin
   LogOut,
   Menu,
   X,
   User,
   Camera,
+  UserCircle, // Dashboard personnel
 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { apiFetch } from "../../utils/api";
@@ -34,14 +37,14 @@ function SidebarItem({ icon: Icon, label, to, active }) {
 }
 
 /**
- * Modal de profil utilisateur
+ * Modal de profil utilisateur (Code conservé)
  */
 function ProfileModal({ user, onClose, onSave }) {
   const fileInputRef = useRef(null);
   const [form, setForm] = useState({
     first_name: user?.first_name || "",
     last_name: user?.last_name || "",
-    phone: user?.phone || "", // On garde le champ téléphone si utile, sinon on peut le retirer
+    phone: user?.phone || "",
     password: "",
     profile_picture: null,
   });
@@ -86,7 +89,6 @@ function ProfileModal({ user, onClose, onSave }) {
         </div>
         
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
-          {/* Photo de profil */}
           <div className="flex justify-center">
             <div
               className="w-24 h-24 rounded-full bg-slate-200 border-4 border-slate-300 flex items-center justify-center relative overflow-hidden group cursor-pointer shadow-lg"
@@ -153,31 +155,71 @@ function ProfileModal({ user, onClose, onSave }) {
 }
 
 /**
- * Composant Layout principal
+ * Composant Layout principal - VERSION PRO
  */
 export function Layout({ children }) {
-  const { user, logout, canAccessAdmin, refreshUser } = useAuth(); // isAdmin retiré si non utilisé directement
+  const { user, logout, canAccessAdmin, refreshUser } = useAuth();
   const location = useLocation();
   const [mobileMenu, setMobileMenu] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
 
-  // Configuration de la navigation F1
-  const navItems = [
-    { icon: LayoutDashboard, label: "Tableau de bord", to: "/dashboard" },
+  // --- CONFIGURATION DE LA NAVIGATION ---
+  
+  // 1. Navigation Publique (Accessible à tous)
+  const navPublic = [
+    { icon: LayoutDashboard, label: "Accueil", to: "/" },
     { icon: Trophy, label: "Classements", to: "/standings" },
+    { icon: Users, label: "Les Écuries", to: "/teams" },
     { icon: Calendar, label: "Calendrier", to: "/calendar" },
   ];
 
-  // Ajouter l'admin si l'utilisateur y a accès (Race Control)
-  if (user?.role === 'admin' || canAccessAdmin) { // Adaptation selon votre logique de rôle
-    navItems.push(
-      { icon: Flag, label: "Race Control", to: "/admin/races" },
-      { icon: Users, label: "Écuries & Pilotes", to: "/admin/teams" }
-    );
-  }
+  // 2. Navigation Privée (Membres connectés)
+  const navPrivate = [
+    { icon: Car, label: "Mon Écurie", to: "/my-team" },
+  ];
+
+  // 3. Navigation Admin (FIA)
+  const navAdmin = [
+    { icon: Flag, label: "Race Control", to: "/admin/race-control" },
+    { icon: Settings, label: "Règlements", to: "/admin/settings" },
+  ];
+
+  // Fonction de rendu du menu
+  const renderNav = () => (
+    <>
+      <p className="section-title mt-1">CHAMPIONNAT</p>
+      {navPublic.map(item => (
+        <SidebarItem key={item.to} {...item} active={location.pathname === item.to} />
+      ))}
+
+      {user && (
+        <>
+          <p className="section-title mt-4">PADDOCK PRIVÉ</p>
+          <SidebarItem 
+            icon={UserCircle} 
+            label="Tableau de bord" 
+            to="/dashboard" 
+            active={location.pathname === "/dashboard"} 
+          />
+          {navPrivate.map(item => (
+            <SidebarItem key={item.to} {...item} active={location.pathname === item.to} />
+          ))}
+        </>
+      )}
+
+      {(user?.role === 'admin' || canAccessAdmin) && (
+        <>
+          <p className="section-title mt-4">FIA CONTROL</p>
+          {navAdmin.map(item => (
+            <SidebarItem key={item.to} {...item} active={location.pathname === item.to} />
+          ))}
+        </>
+      )}
+    </>
+  );
 
   return (
-    <div className="min-h-screen flex relative">
+    <div className="min-h-screen flex relative bg-slate-50 dark:bg-slate-900">
       {/* Watermark */}
       <Watermark />
 
@@ -191,52 +233,54 @@ export function Layout({ children }) {
             </div>
             <div>
               <h1 className="text-white font-bold text-base">F1 MANAGER</h1>
-              <p className="text-slate-400 text-xs font-medium">Championnat 2026</p>
+              <p className="text-slate-400 text-xs font-medium">Saison 2026</p>
             </div>
           </div>
         </div>
 
         {/* Navigation */}
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-          <p className="section-title mt-1">MENU PRINCIPAL</p>
-          {navItems.map((item) => (
-            <SidebarItem
-              key={item.to}
-              icon={item.icon}
-              label={item.label}
-              to={item.to}
-              active={location.pathname === item.to}
-            />
-          ))}
+          {renderNav()}
         </nav>
 
-        {/* Footer Sidebar - Profil */}
+        {/* Footer Sidebar - Profil ou Login */}
         <div className="p-4 border-t border-slate-700/50 bg-slate-900/50">
-          <button
-            onClick={() => setShowProfileModal(true)}
-            className="w-full flex items-center gap-3 p-2.5 rounded-lg hover:bg-sidebar-hover transition-all text-left group"
-          >
-            <div className="w-10 h-10 rounded-full bg-slate-600 flex items-center justify-center text-white text-sm font-bold overflow-hidden ring-2 ring-slate-500 group-hover:ring-red-500 transition-all">
-              {user?.profile_picture ? (
-                <img src={user.profile_picture} className="w-full h-full object-cover" alt="" />
-              ) : (
-                user?.username?.[0]?.toUpperCase() || "?"
-              )}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-white truncate">
-                {user?.first_name} {user?.last_name}
-              </p>
-              <p className="text-xs text-slate-400 truncate">{user?.role || "Membre"}</p>
-            </div>
-          </button>
-          
-          <button
-            onClick={logout}
-            className="w-full mt-3 flex items-center justify-center gap-2 px-3 py-2.5 text-red-400 hover:bg-red-500/10 hover:text-red-300 rounded-lg text-sm font-semibold transition-all"
-          >
-            <LogOut size={16} /> Déconnexion
-          </button>
+          {user ? (
+            <>
+              <button
+                onClick={() => setShowProfileModal(true)}
+                className="w-full flex items-center gap-3 p-2.5 rounded-lg hover:bg-sidebar-hover transition-all text-left group"
+              >
+                <div className="w-10 h-10 rounded-full bg-slate-600 flex items-center justify-center text-white text-sm font-bold overflow-hidden ring-2 ring-slate-500 group-hover:ring-red-500 transition-all">
+                  {user?.profile_picture ? (
+                    <img src={user.profile_picture} className="w-full h-full object-cover" alt="" />
+                  ) : (
+                    user?.username?.[0]?.toUpperCase() || "?"
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-white truncate">
+                    {user?.first_name} {user?.last_name}
+                  </p>
+                  <p className="text-xs text-slate-400 truncate">{user?.role || "Membre"}</p>
+                </div>
+              </button>
+              
+              <button
+                onClick={logout}
+                className="w-full mt-3 flex items-center justify-center gap-2 px-3 py-2.5 text-red-400 hover:bg-red-500/10 hover:text-red-300 rounded-lg text-sm font-semibold transition-all"
+              >
+                <LogOut size={16} /> Déconnexion
+              </button>
+            </>
+          ) : (
+            <Link 
+              to="/login" 
+              className="btn-primary w-full flex justify-center text-sm"
+            >
+              Connexion Membre
+            </Link>
+          )}
         </div>
       </aside>
 
@@ -273,24 +317,24 @@ export function Layout({ children }) {
                 <X size={22} />
               </button>
             </div>
-            <nav className="space-y-1">
-              {navItems.map((item) => (
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  onClick={() => setMobileMenu(false)}
-                  className="flex items-center gap-3 p-3 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium"
-                >
-                  <item.icon size={20} /> {item.label}
-                </Link>
-              ))}
+            
+            <nav className="space-y-1" onClick={() => setMobileMenu(false)}>
+              {renderNav()}
+              
               <div className="border-t dark:border-slate-700 my-4" />
-              <button
-                onClick={logout}
-                className="w-full flex items-center gap-3 p-3 text-red-600 font-semibold"
-              >
-                <LogOut size={20} /> Déconnexion
-              </button>
+              
+              {user ? (
+                <button
+                  onClick={logout}
+                  className="w-full flex items-center gap-3 p-3 text-red-600 font-semibold"
+                >
+                  <LogOut size={20} /> Déconnexion
+                </button>
+              ) : (
+                <Link to="/login" className="flex items-center gap-3 p-3 font-bold text-red-600">
+                  <User size={20} /> Se connecter
+                </Link>
+              )}
             </nav>
           </div>
         )}
