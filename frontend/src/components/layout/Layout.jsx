@@ -1,22 +1,20 @@
 /**
  * Layout - Composant de mise en page principale avec sidebar
+ * ADAPTÉ POUR F1 CHAMPIONSHIP MANAGER
  */
 import { useState, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
-  Activity,
-  Users,
-  ClipboardList,
-  Stethoscope,
-  ShieldAlert,
-  LogOut,
   LayoutDashboard,
-  FileText,
+  Trophy,     // Classements
+  Calendar,   // Calendrier
+  Flag,       // Race Control
+  Users,      // Écuries & Pilotes
+  LogOut,
   Menu,
   X,
   User,
   Camera,
-  ShieldCheck, // Import de l'icône pour la visite médicale
 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { apiFetch } from "../../utils/api";
@@ -43,7 +41,7 @@ function ProfileModal({ user, onClose, onSave }) {
   const [form, setForm] = useState({
     first_name: user?.first_name || "",
     last_name: user?.last_name || "",
-    phone: user?.phone || "",
+    phone: user?.phone || "", // On garde le champ téléphone si utile, sinon on peut le retirer
     password: "",
     profile_picture: null,
   });
@@ -129,12 +127,6 @@ function ProfileModal({ user, onClose, onSave }) {
             />
           </div>
           
-          <InputField
-            label="Téléphone"
-            value={form.phone}
-            onChange={(e) => setForm({ ...form, phone: e.target.value })}
-          />
-          
           <div className="border-t dark:border-slate-700 pt-3 mt-1">
             <p className="label mb-2 text-red-600 dark:text-red-400">Sécurité</p>
             <InputField
@@ -164,25 +156,24 @@ function ProfileModal({ user, onClose, onSave }) {
  * Composant Layout principal
  */
 export function Layout({ children }) {
-  const { user, logout, isAdmin, canAccessAdmin, refreshUser } = useAuth();
+  const { user, logout, canAccessAdmin, refreshUser } = useAuth(); // isAdmin retiré si non utilisé directement
   const location = useLocation();
   const [mobileMenu, setMobileMenu] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
 
-  // Configuration de la navigation
+  // Configuration de la navigation F1
   const navItems = [
     { icon: LayoutDashboard, label: "Tableau de bord", to: "/dashboard" },
-    { icon: ClipboardList, label: "Rendez-vous", to: "/appointments" },
-    { icon: Users, label: "Patients", to: "/patients" },
-    { icon: Stethoscope, label: "Diagnostic", to: "/diagnosis" },
-    { icon: FileText, label: "Rapports", to: "/reports" },
-    { icon: ShieldCheck, label: "Visite Médicale", to: "/medical-visits" }, // Ajout de l'onglet Visite Médicale
-    { icon: Activity, label: "Effectifs", to: "/roster" },
+    { icon: Trophy, label: "Classements", to: "/standings" },
+    { icon: Calendar, label: "Calendrier", to: "/calendar" },
   ];
 
-  // Ajouter l'admin si l'utilisateur y a accès
-  if (canAccessAdmin) {
-    navItems.push({ icon: ShieldAlert, label: "Administration", to: "/admin" });
+  // Ajouter l'admin si l'utilisateur y a accès (Race Control)
+  if (user?.role === 'admin' || canAccessAdmin) { // Adaptation selon votre logique de rôle
+    navItems.push(
+      { icon: Flag, label: "Race Control", to: "/admin/races" },
+      { icon: Users, label: "Écuries & Pilotes", to: "/admin/teams" }
+    );
   }
 
   return (
@@ -199,15 +190,15 @@ export function Layout({ children }) {
               <Logo size={36} />
             </div>
             <div>
-              <h1 className="text-white font-bold text-base">MRSA</h1>
-              <p className="text-slate-400 text-xs font-medium">Gestion Médicale</p>
+              <h1 className="text-white font-bold text-base">F1 MANAGER</h1>
+              <p className="text-slate-400 text-xs font-medium">Championnat 2026</p>
             </div>
           </div>
         </div>
 
         {/* Navigation */}
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-          <p className="section-title mt-1">Navigation</p>
+          <p className="section-title mt-1">MENU PRINCIPAL</p>
           {navItems.map((item) => (
             <SidebarItem
               key={item.to}
@@ -236,7 +227,7 @@ export function Layout({ children }) {
               <p className="text-sm font-medium text-white truncate">
                 {user?.first_name} {user?.last_name}
               </p>
-              <p className="text-xs text-slate-400 truncate">{user?.grade_name}</p>
+              <p className="text-xs text-slate-400 truncate">{user?.role || "Membre"}</p>
             </div>
           </button>
           
@@ -257,7 +248,7 @@ export function Layout({ children }) {
             <div className="w-10 h-10 bg-white rounded-lg border border-slate-200 p-1 shadow">
               <Logo size={32} />
             </div>
-            <span className="font-bold text-slate-800 dark:text-white">MRSA</span>
+            <span className="font-bold text-slate-800 dark:text-white">F1 MGR</span>
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />
