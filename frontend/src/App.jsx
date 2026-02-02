@@ -1,6 +1,6 @@
 /**
- * App.jsx - Composant racine F1 Championship Manager
- * Gère le routing et les providers de contexte
+ * App.jsx - Composant racine F1 MANAGER PRO
+ * Structure: Public (Vitrine) / Privé (Gestion Écurie) / Admin (FIA)
  */
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
@@ -14,13 +14,16 @@ import { ProtectedRoute, AdminRoute, PublicOnlyRoute } from "./components/auth/P
 // Pages publiques
 import { Landing } from "./pages/public/Landing";
 import { Login } from "./pages/public/Login";
-import { Standings } from "./pages/public/Standings"; // Nouvelle page Classements
-import { Calendar } from "./pages/public/Calendar";   // Nouvelle page Calendrier
+import { Standings } from "./pages/public/Standings";
+import { Calendar } from "./pages/public/Calendar";
+import { TeamsList } from "./pages/public/TeamsList"; // Nouvelle page publique
 
-// Pages privées (Dashboard & Admin)
+// Pages privées (Membres)
 import { Dashboard } from "./pages/private/Dashboard";
-import { AdminRaceControl } from "./pages/private/AdminRaceControl"; // Gestion des courses
-import { AdminTeams } from "./pages/private/AdminTeams";             // Gestion des écuries
+import { MyTeam } from "./pages/private/MyTeam"; // Gestion de l'écurie du joueur
+
+// Pages Admin (FIA)
+import { AdminRaceControl } from "./pages/private/AdminRaceControl";
 
 /**
  * Composant App principal
@@ -31,12 +34,14 @@ export default function App() {
       <ThemeProvider>
         <AuthProvider>
           <Routes>
-            {/* --- ROUTES PUBLIQUES --- */}
+            {/* --- ZONE PUBLIQUE (Accessible sans compte) --- */}
             
-            {/* Landing page (Accueil) */}
             <Route path="/" element={<Landing />} />
+            <Route path="/standings" element={<Standings />} />
+            <Route path="/calendar" element={<Calendar />} />
+            <Route path="/teams" element={<TeamsList />} />
             
-            {/* Login - Redirige vers dashboard si déjà connecté */}
+            {/* Login (Uniquement si pas connecté) */}
             <Route
               path="/login"
               element={
@@ -46,9 +51,8 @@ export default function App() {
               }
             />
 
-            {/* --- ROUTES MEMBRES (PROTECTED) --- */}
-            {/* Accessibles à tout utilisateur connecté */}
-
+            {/* --- PADDOCK PRIVÉ (Compte requis) --- */}
+            
             <Route
               path="/dashboard"
               element={
@@ -58,29 +62,20 @@ export default function App() {
               }
             />
 
+            {/* Gestion de son écurie */}
             <Route
-              path="/standings"
+              path="/my-team"
               element={
                 <ProtectedRoute>
-                  <Standings />
+                  <MyTeam />
                 </ProtectedRoute>
               }
             />
 
+            {/* --- FIA CONTROL (Admin uniquement) --- */}
+            
             <Route
-              path="/calendar"
-              element={
-                <ProtectedRoute>
-                  <Calendar />
-                </ProtectedRoute>
-              }
-            />
-
-            {/* --- ROUTES ADMIN (RACE CONTROL) --- */}
-            {/* Accessibles uniquement aux admins */}
-
-            <Route
-              path="/admin/races"
+              path="/admin/race-control"
               element={
                 <AdminRoute>
                   <AdminRaceControl />
@@ -88,17 +83,7 @@ export default function App() {
               }
             />
 
-            <Route
-              path="/admin/teams"
-              element={
-                <AdminRoute>
-                  <AdminTeams />
-                </AdminRoute>
-              }
-            />
-
             {/* --- CATCH-ALL --- */}
-            {/* Redirige vers l'accueil si route inconnue */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </AuthProvider>
